@@ -1,0 +1,11 @@
+{
+  "editor.scrollbar.horizontal": "hidden",
+  "editor.scrollbar.vertical": "hidden",
+  "editor.scrollbar.verticalScrollbarSize": 0,
+  "editor.scrollbar.horizontalScrollbarSize": 0,
+  "editor.scrollbar.ignoreHorizontalScrollbarInContentHeight": false,
+  "editor.smoothScrolling": true,
+  "workbench.tree.enableStickyScroll": true,
+  "workbench.tree.expandMode": "singleClick",
+  "testing.resultsView.layout": "treeRight"
+}
