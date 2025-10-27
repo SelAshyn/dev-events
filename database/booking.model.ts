@@ -1,4 +1,4 @@
-import { Schema, model, models, Document, Types } from 'mongoose';
+import { Schema, model, models, Document, Types, Error as MongooseError } from 'mongoose';
 import Event from './event.model';
 
 // TypeScript interface for Booking document
@@ -36,23 +36,21 @@ const BookingSchema = new Schema<IBooking>(
   }
 );
 
-// Pre-save hook to validate events exists before creating booking
-BookingSchema.pre('save', async function (next) {
-  const booking = this as IBooking;
-
+// Pre-save hook to validate event exists before creating booking
+BookingSchema.pre('save', async function (this: IBooking, next) {
   // Only validate eventId if it's new or modified
-  if (booking.isModified('eventId') || booking.isNew) {
+  if (this.isModified('eventId') || this.isNew) {
     try {
-      const eventExists = await Event.findById(booking.eventId).select('_id');
+      const eventExists = await Event.exists({ _id: this.eventId });
 
       if (!eventExists) {
-        const error = new Error(`Event with ID ${booking.eventId} does not exist`);
-        error.name = 'ValidationError';
+        const error = new MongooseError.ValidationError();
+        error.addError('eventId', new MongooseError.ValidatorError({ message: `Event with ID ${this.eventId} does not exist`, path: 'eventId' }));
         return next(error);
       }
     } catch {
-      const validationError = new Error('Invalid events ID format or database error');
-      validationError.name = 'ValidationError';
+      const validationError = new MongooseError.ValidationError();
+      validationError.addError('eventId', new MongooseError.ValidatorError({ message: 'Invalid event ID format or database error', path: 'eventId' }));
       return next(validationError);
     }
   }
