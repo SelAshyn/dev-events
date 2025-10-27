@@ -8,18 +8,18 @@ type MongooseCache = {
 
 // Extend the global object to include our mongoose cache
 declare global {
-  // eslint-disable-next-line no-var
-  var mongoose: MongooseCache | undefined;
+  /* eslint-disable-next-line no-var */
+  var mongooseConn: MongooseCache | undefined;
 }
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
 
 // Initialize the cache on the global object to persist across hot reloads in development
-let cached: MongooseCache = global.mongoose || { conn: null, promise: null };
+let cachedConn: MongooseCache = globalThis.mongooseConn || { conn: null, promise: null };
 
-if (!global.mongoose) {
-  global.mongoose = cached;
+if (!globalThis.mongooseConn) {
+  globalThis.mongooseConn = cachedConn;
 }
 
 /**
@@ -29,12 +29,12 @@ if (!global.mongoose) {
  */
 async function connectDB(): Promise<typeof mongoose> {
   // Return existing connection if available
-  if (cached.conn) {
-    return cached.conn;
+  if (cachedConn.conn) {
+    return cachedConn.conn;
   }
 
   // Return existing connection promise if one is in progress
-  if (!cached.promise) {
+  if (!cachedConn.promise) {
     // Validate MongoDB URI exists
     if (!MONGODB_URI) {
       throw new Error(
@@ -46,21 +46,21 @@ async function connectDB(): Promise<typeof mongoose> {
     };
 
     // Create a new connection promise
-    cached.promise = mongoose.connect(MONGODB_URI!, options).then((mongoose) => {
+    cachedConn.promise = mongoose.connect(MONGODB_URI!, options).then((mongoose) => {
       return mongoose;
     });
   }
 
   try {
     // Wait for the connection to establish
-    cached.conn = await cached.promise;
+    cachedConn.conn = await cachedConn.promise;
   } catch (error) {
     // Reset promise on error to allow retry
-    cached.promise = null;
+    cachedConn.promise = null;
     throw error;
   }
 
-  return cached.conn;
+  return cachedConn.conn;
 }
 
 export default connectDB;
